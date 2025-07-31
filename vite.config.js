@@ -10,10 +10,11 @@ export default defineConfig({
       formats: ['es', 'cjs'],
     },
     rollupOptions: {
-      external: ['vue'],
+      external: ['vue', 'vitepress'],
       output: {
         globals: {
           vue: 'Vue',
+          vitepress: 'VitePress',
         },
       },
     },
