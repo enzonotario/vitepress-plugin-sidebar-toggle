@@ -6,9 +6,6 @@ import './style.css'
 export default {
   extends: DefaultTheme,
   enhanceApp(ctx) {
-    useSidebarToggle({
-      app: ctx.app,
-      router: ctx.router,
-    })
+    useSidebarToggle()
   },
 }

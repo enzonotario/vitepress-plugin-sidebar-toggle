@@ -48,10 +48,7 @@ import { useSidebarToggle } from 'vitepress-plugin-sidebar-toggle'
 export default {
   extends: DefaultTheme,
   enhanceApp(ctx) {
-    useSidebarToggle({
-      app: ctx.app,
-      router: ctx.router,
-    })
+    useSidebarToggle()
   },
 }
 ```
@@ -64,10 +61,7 @@ import { useSidebarToggle } from 'vitepress-plugin-sidebar-toggle'
 export default {
   extends: DefaultTheme,
   enhanceApp(ctx) {
-    useSidebarToggle({
-      app: ctx.app,
-      router: ctx.router,
-    })
+    useSidebarToggle()
   },
 } satisfies Theme
 ```

@@ -1,12 +1,11 @@
+import { onContentUpdated } from 'vitepress'
 import { ref } from 'vue'
 import './style.css'
 
-export function useSidebarToggle({ _app, router }) {
+export function useSidebarToggle() {
   if (typeof window === 'undefined') {
     return
   }
-
-  const INIT_DELAY = 100
 
   const isSidebarHidden = ref(false)
   const TRANSITION_DURATION = 300
@@ -96,8 +95,10 @@ export function useSidebarToggle({ _app, router }) {
     }
   }
 
-  router.onAfterRouteChanged = () => {
-    setTimeout(() => {
+  onContentUpdated(() => {
+    const vpContent = document.querySelector('.VPContent')
+
+    if (vpContent) {
       loadState()
 
       const hasToggleButton = document.querySelector('.vp-sidebar-toggle')
@@ -109,6 +110,20 @@ export function useSidebarToggle({ _app, router }) {
       else if (!hasSidebar) {
         removeToggleButton()
       }
-    }, INIT_DELAY)
-  }
+
+      const observer = new MutationObserver((mutations, obs) => {
+        if (
+          (isSidebarHidden.value && document.querySelector('.VPContent.has-sidebar'))
+          || (!isSidebarHidden.value && !document.querySelector('.VPContent.has-sidebar'))
+        ) {
+          updateDOM()
+          obs.disconnect()
+        }
+      })
+      observer.observe(vpContent, {
+        childList: true,
+        subtree: true,
+      })
+    }
+  })
 }

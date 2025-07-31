@@ -3,7 +3,7 @@
   display: none;
 }
 @media (min-width: 960px) {
-  .vp-sidebar-toggle {
+  html:has(aside.VPSidebar) .vp-sidebar-toggle {
     position: fixed;
     top: calc(var(--vp-nav-height) + 6px);
     left: calc(max(32px, calc((100% - (var(--vp-layout-max-width) - 64px)) / 2)) + var(--vp-sidebar-width) - 74px);
