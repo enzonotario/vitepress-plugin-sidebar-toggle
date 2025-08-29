@@ -68,6 +68,23 @@ export default {
 
 ::::
 
+## SSR Configuration
+
+3. To ensure the plugin works correctly with server-side rendering (SSR), you need to configure Vite to not externalize the plugin during SSR. Add the following configuration to your `.vitepress/config.js` or `.vitepress/config.ts` file:
+
+```js [.vitepress/config.js]{2-8}
+export default defineConfig({
+    vite: {
+        ssr: {
+            noExternal: [
+                'vitepress-plugin-sidebar-toggle', // [!code ++]
+            ],
+        },
+    },
+    // other configurations...
+})
+```
+
 That's it! Your VitePress site now has a sidebar toggle button that allows users to hide or show the sidebar.
 
 ## How It Works
