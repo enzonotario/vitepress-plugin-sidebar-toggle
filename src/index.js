@@ -1,4 +1,4 @@
-import { onContentUpdated } from 'vitepress'
+import { onContentUpdated } from 'vitepress/client'
 import { ref } from 'vue'
 import './style.css'
 
