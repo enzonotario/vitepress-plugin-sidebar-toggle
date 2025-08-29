@@ -7,12 +7,14 @@ export default defineConfig({
       entry: resolve(__dirname, 'src/index.js'),
       name: 'vitepress-plugin-sidebar-toggle',
       fileName: 'vitepress-plugin-sidebar-toggle',
+      formats: ['es', 'cjs'],
     },
     rollupOptions: {
-      external: ['vue', 'vitepress', 'vitepress/client'],
+      external: ['vue', 'vitepress'],
       output: {
         globals: {
           vue: 'Vue',
+          vitepress: 'VitePress',
         },
       },
     },
