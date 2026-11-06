@@ -127,3 +127,34 @@ test('keyboard focus has a visible outline and Space toggles the sidebar', async
   await page.keyboard.press('Space')
   await expect(page.locator('html')).toHaveClass(/vp-sidebar-hidden/)
 })
+
+test('header placement follows the title in visual and keyboard order', async ({ page }) => {
+  await openSidebar(page)
+  const button = page.locator('.vp-sidebar-toggle')
+  await expect(page.locator('.VPNavBar .content-body > :first-child')).toHaveClass('vp-sidebar-toggle')
+  await expect(button).toHaveCSS('position', 'static')
+  await page.locator('.VPNavBarTitle .title').focus()
+  await page.keyboard.press('Tab')
+  await expect(button).toBeFocused()
+})
+
+test('header sidebar classes remain under VitePress control', async ({ page }) => {
+  await openSidebar(page)
+  await page.locator('.vp-sidebar-toggle').click()
+  await expect(page.locator('.VPNavBar')).toHaveClass(/has-sidebar/)
+  await expect(page.locator('.VPNavBarTitle')).toHaveClass(/has-sidebar/)
+  await updateContent(page)
+  await expect(page.locator('.VPNavBar')).toHaveClass(/has-sidebar/)
+  await expect(page.locator('.VPNavBarTitle')).toHaveClass(/has-sidebar/)
+})
+
+test('toggle is prepended to content when the header is absent', async ({ page }) => {
+  await openSidebar(page)
+  await page.evaluate(() => {
+    document.querySelector('.vp-sidebar-toggle').remove()
+    document.querySelector('.VPNavBar').remove()
+  })
+  await updateContent(page)
+  await expect(page.locator('.VPContent > :first-child')).toHaveClass('vp-sidebar-toggle')
+  await expect(page.locator('.vp-sidebar-toggle')).toBeVisible()
+})

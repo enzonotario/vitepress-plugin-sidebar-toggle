@@ -40,6 +40,11 @@
 .has-sidebar-toggle.vp-sidebar-hidden .vp-sidebar-toggle {
   left: 16px;
 }
+.has-sidebar-toggle .VPNavBar .vp-sidebar-toggle {
+  position: static;
+  flex-shrink: 0;
+  margin-right: 12px;
+}
 
 /* Hide the sidebar when the toggle button is clicked */
 .vp-sidebar-hidden .VPSidebar {

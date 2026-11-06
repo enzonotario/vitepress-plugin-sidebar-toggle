@@ -17,8 +17,6 @@ export function useSidebarToggle() {
 
   const VP_ELEMENTS = [
     CONTENT_SELECTOR,
-    '.VPNavBar',
-    '.VPNavBarTitle',
     '.VPLocalNav',
     '.VPDoc',
     '.VPFooter',
@@ -106,9 +104,9 @@ export function useSidebarToggle() {
 
     button.addEventListener('click', toggle)
 
-    const content = document.querySelector(CONTENT_SELECTOR)
+    const content = document.querySelector('.VPNavBar .content-body') ?? document.querySelector(CONTENT_SELECTOR)
     if (content) {
-      content.appendChild(button)
+      content.prepend(button)
     }
   }
 
