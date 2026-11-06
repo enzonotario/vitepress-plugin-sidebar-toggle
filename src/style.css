@@ -46,11 +46,6 @@
   margin-right: 12px;
 }
 
-/* Hide the sidebar when the toggle button is clicked */
-.vp-sidebar-hidden .VPSidebar {
-  transform: translateX(-100%);
-}
-
 /* Transition effects for sidebar visibility */
 .vp-sidebar-transitioning .vp-sidebar-toggle {
   transition: left 0.3s ease;
@@ -66,15 +61,31 @@
   transition: padding 0.3s ease;
 }
 
-/* Spacing adjustments when sidebar is hidden to leave space for the toggle button */
-.vp-sidebar-hidden .VPLocalNav {
-  padding-left: 20px;
-}
+@media (min-width: 960px) {
+  .has-sidebar-toggle.vp-sidebar-hidden .VPSidebar {
+    display: none;
+    transform: translateX(-100%);
+  }
 
-/** To fix the background color of NavBar Title when sidebar is hidden, since the classes of this element are dynamic based on scroll */
-.has-sidebar-toggle.vp-sidebar-hidden .VPNavBar.has-sidebar {
-  background-color: var(--vp-nav-bg-color);
-}
-.has-sidebar-toggle.vp-sidebar-hidden .VPNavBar.has-sidebar .divider {
-  background-color: var(--vp-c-divider);
+  html.has-sidebar-toggle.vp-sidebar-hidden .VPDoc .container {
+    max-width: calc(var(--vp-layout-max-width) - 64px);
+  }
+
+  html.has-sidebar-toggle.vp-sidebar-hidden .VPDoc .content,
+  html.has-sidebar-toggle.vp-sidebar-hidden .VPDoc .content-container {
+    max-width: none;
+  }
+
+  /* Leave space for the fallback toggle when the sidebar is hidden. */
+  .vp-sidebar-hidden .VPLocalNav {
+    padding-left: 20px;
+  }
+
+  /* VitePress controls these header classes when scrolling. */
+  .has-sidebar-toggle.vp-sidebar-hidden .VPNavBar.has-sidebar {
+    background-color: var(--vp-nav-bg-color);
+  }
+  .has-sidebar-toggle.vp-sidebar-hidden .VPNavBar.has-sidebar .divider {
+    background-color: var(--vp-c-divider);
+  }
 }

@@ -6,6 +6,7 @@ import {
   blockStorageWrites,
   openSidebar,
   readSidebarPreference,
+  seedSidebarPreference,
   sidebarPage,
   updateContent,
   writeSidebarPreference,
@@ -157,4 +158,39 @@ test('toggle is prepended to content when the header is absent', async ({ page }
   await updateContent(page)
   await expect(page.locator('.VPContent > :first-child')).toHaveClass('vp-sidebar-toggle')
   await expect(page.locator('.vp-sidebar-toggle')).toBeVisible()
+})
+
+test('hidden desktop sidebar releases document width and keyboard navigation', async ({ page }) => {
+  await openSidebar(page)
+  const content = page.locator('.VPDoc .content-container')
+  const visibleWidth = await content.evaluate(element => element.getBoundingClientRect().width)
+  await page.locator('.vp-sidebar-toggle').click()
+  await expect(page.locator('.VPSidebar')).toHaveCSS('display', 'none')
+  await expect(page.locator('.VPDoc > .container > .content')).toHaveCSS('max-width', 'none')
+  await expect(content).toHaveCSS('max-width', 'none')
+  await expect(page.locator('.VPDoc > .container')).toHaveCSS('max-width', '1376px')
+  expect(await content.evaluate(element => element.getBoundingClientRect().width)).toBeGreaterThan(visibleWidth)
+  await page.locator('.vp-sidebar-toggle').focus()
+  await page.locator('.VPSidebar a').first().evaluate(element => element.focus())
+  await expect(page.locator('.vp-sidebar-toggle')).toBeFocused()
+  await page.locator('.vp-sidebar-toggle').click()
+  await expect(page.locator('.VPSidebar')).toBeVisible()
+  await expect(content).toHaveCSS('max-width', '688px')
+})
+
+test('saved desktop preference leaves mobile navigation and layout usable', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 })
+  await seedSidebarPreference(page, '1')
+  await page.goto(sidebarPage)
+  await expect(page.locator('html')).toHaveClass(/vp-sidebar-hidden/)
+  await expect(page.locator('.vp-sidebar-toggle')).toBeHidden()
+  await expect(page.locator('.VPLocalNav')).toHaveCSS('padding-left', '0px')
+  await page.locator('.VPLocalNav .menu').click()
+  const sidebar = page.locator('.VPSidebar')
+  await expect(sidebar).toHaveClass(/open/)
+  await expect(sidebar).toHaveCSS('transform', 'matrix(1, 0, 0, 1, 0, 0)')
+  await expect(sidebar).toBeInViewport()
+  await sidebar.getByRole('link', { name: 'Getting Started' }).click()
+  await expect(page).toHaveURL(/\/guide\/getting-started(?:\.html)?$/)
+  await expect(sidebar).not.toHaveClass(/open/)
 })
