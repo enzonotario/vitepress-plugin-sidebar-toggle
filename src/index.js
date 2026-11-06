@@ -44,6 +44,8 @@ export function useSidebarToggle() {
 
     rootElement.classList[isSidebarHidden.value ? 'add' : 'remove']('vp-sidebar-hidden')
 
+    document.querySelector(`.${TOGGLE_BUTTON_CLASS}`)?.setAttribute('aria-expanded', String(!isSidebarHidden.value))
+
     VP_ELEMENTS.forEach((selector) => {
       const element = document.querySelector(selector)
       if (!element) {
@@ -89,6 +91,9 @@ export function useSidebarToggle() {
   function addToggleButton() {
     const button = document.createElement('button')
     button.className = TOGGLE_BUTTON_CLASS
+    button.type = 'button'
+    button.setAttribute('aria-controls', 'VPSidebarNav')
+    button.setAttribute('aria-expanded', String(!isSidebarHidden.value))
     button.setAttribute('aria-label', 'Toggle sidebar')
     button.setAttribute('title', 'Toggle sidebar')
 
