@@ -8,6 +8,7 @@ export function useSidebarToggle() {
   }
 
   const isSidebarHidden = ref(false)
+  let hasUnsavedState = false
   const TRANSITION_DURATION = 300
   const STORAGE_KEY = 'vp-sidebar-hidden'
   const SIDEBAR_SELECTOR = '.VPSidebar'
@@ -61,13 +62,28 @@ export function useSidebarToggle() {
   }
 
   function saveState() {
-    localStorage.setItem(STORAGE_KEY, isSidebarHidden.value ? '1' : '0')
+    try {
+      localStorage.setItem(STORAGE_KEY, isSidebarHidden.value ? '1' : '0')
+      hasUnsavedState = false
+    }
+    catch (error) {
+      hasUnsavedState = true
+      console.warn('Unable to save the docs sidebar preference.', error)
+    }
   }
 
   function loadState() {
-    const saved = localStorage.getItem(STORAGE_KEY)
-    isSidebarHidden.value = saved === '1'
-    updateDOM()
+    if (hasUnsavedState) {
+      return
+    }
+
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY)
+      isSidebarHidden.value = saved === '1'
+    }
+    catch (error) {
+      console.warn('Unable to restore the docs sidebar preference.', error)
+    }
   }
 
   function addToggleButton() {
@@ -103,6 +119,7 @@ export function useSidebarToggle() {
 
     if (vpContent) {
       loadState()
+      updateDOM()
 
       const hasToggleButton = document.querySelector(`.${TOGGLE_BUTTON_CLASS}`)
       const hasSidebar = document.querySelector(SIDEBAR_SELECTOR)

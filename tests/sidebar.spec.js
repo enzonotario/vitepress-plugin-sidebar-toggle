@@ -1,7 +1,14 @@
 import { expect, test } from '@playwright/test'
 import {
+  blockSidebarReadsOnLoad,
+  blockSidebarWrites,
+  blockStorageAccess,
+  blockStorageWrites,
   openSidebar,
+  readSidebarPreference,
+  sidebarPage,
   updateContent,
+  writeSidebarPreference,
 } from './helpers.js'
 
 test.beforeEach(async ({ page }) => {
@@ -24,4 +31,64 @@ test('repeated hidden content updates keep sidebar spacing removed', async ({ pa
   await expect(page.locator('.vp-sidebar-toggle')).toHaveCount(1)
   await page.locator('.vp-sidebar-toggle').click()
   await expect(page.locator('.VPContent')).toHaveClass(/has-sidebar/)
+})
+
+test('blocked storage reads still initialize a usable toggle', async ({ page }) => {
+  const errors = []
+  page.on('pageerror', error => errors.push(error.message))
+  await blockSidebarReadsOnLoad(page)
+  await page.goto(sidebarPage)
+  const button = page.locator('.vp-sidebar-toggle')
+  await expect(button).toBeVisible()
+  await button.click()
+  await expect(page.locator('html')).toHaveClass(/vp-sidebar-hidden/)
+  await updateContent(page)
+  await expect(page.locator('html')).toHaveClass(/vp-sidebar-hidden/)
+  await button.click()
+  await expect(page.locator('html')).not.toHaveClass(/vp-sidebar-hidden/)
+  expect(errors).toEqual([])
+})
+
+test('failed storage writes preserve the toggle and finish its transition', async ({ page }) => {
+  await openSidebar(page)
+  const errors = []
+  const warnings = []
+  page.on('pageerror', error => errors.push(error.message))
+  page.on('console', (message) => {
+    if (message.type() === 'warning') {
+      warnings.push(message.text())
+    }
+  })
+  await blockStorageWrites(page)
+  await page.locator('.vp-sidebar-toggle').click()
+  await expect(page.locator('html')).toHaveClass(/vp-sidebar-hidden/)
+  await expect(page.locator('html')).not.toHaveClass(/vp-sidebar-transitioning/)
+  await blockStorageAccess(page)
+  await updateContent(page)
+  await expect(page.locator('html')).toHaveClass(/vp-sidebar-hidden/)
+  expect(errors).toEqual([])
+  expect(warnings.some(message => message.includes('Unable to save'))).toBe(true)
+})
+
+test('failed writes keep the preference through navigation until a write succeeds', async ({ page }) => {
+  await openSidebar(page)
+  const restoreWrites = await blockSidebarWrites(page)
+
+  const button = page.locator('.vp-sidebar-toggle')
+  await button.click()
+  await expect(page.locator('html')).toHaveClass(/vp-sidebar-hidden/)
+  expect(await readSidebarPreference(page)).toBe('0')
+  await page.locator('.VPDocFooter .prev').click()
+  await expect(page.locator('h1')).toContainText('Getting Started')
+  await expect(page.locator('html')).toHaveClass(/vp-sidebar-hidden/)
+  await updateContent(page)
+  await expect(page.locator('html')).toHaveClass(/vp-sidebar-hidden/)
+
+  await restoreWrites()
+  await button.click()
+  await expect(page.locator('html')).not.toHaveClass(/vp-sidebar-hidden/)
+  expect(await readSidebarPreference(page)).toBe('0')
+  await writeSidebarPreference(page, '1')
+  await updateContent(page)
+  await expect(page.locator('html')).toHaveClass(/vp-sidebar-hidden/)
 })
