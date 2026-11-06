@@ -31,6 +31,7 @@
     "node": ">=18.0.0"
   },
   "scripts": {
+    "test": "playwright test",
     "build": "vite build",
     "docs:build": "vitepress build docs",
     "dev": "vitepress dev docs",
@@ -45,6 +46,7 @@
   },
   "devDependencies": {
     "@antfu/eslint-config": "^4.17.0",
+    "@playwright/test": "^1.65.0",
     "@unocss/eslint-plugin": "^66.3.3",
     "eslint": "^9.31.0",
     "eslint-plugin-format": "^1.0.1",

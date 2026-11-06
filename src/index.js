@@ -11,7 +11,7 @@ export function useSidebarToggle() {
   const TRANSITION_DURATION = 300
   const STORAGE_KEY = 'vp-sidebar-hidden'
   const SIDEBAR_SELECTOR = '.VPSidebar'
-  const TOGGLE_BUTTON_SELECTOR = '.vp-sidebar-toggle'
+  const TOGGLE_BUTTON_CLASS = 'vp-sidebar-toggle'
   const CONTENT_SELECTOR = '.VPContent'
 
   const VP_ELEMENTS = [
@@ -45,11 +45,14 @@ export function useSidebarToggle() {
 
     VP_ELEMENTS.forEach((selector) => {
       const element = document.querySelector(selector)
-      if (!element)
+      if (!element) {
         return
+      }
 
-      if (isSidebarHidden.value && element.classList.contains('has-sidebar')) {
-        element.classList.remove('has-sidebar')
+      if (isSidebarHidden.value) {
+        if (element.classList.contains('has-sidebar')) {
+          element.classList.remove('has-sidebar')
+        }
       }
       else if (document.querySelector(SIDEBAR_SELECTOR)) {
         element.classList.add('has-sidebar')
@@ -69,7 +72,7 @@ export function useSidebarToggle() {
 
   function addToggleButton() {
     const button = document.createElement('button')
-    button.className = 'vp-sidebar-toggle'
+    button.className = TOGGLE_BUTTON_CLASS
     button.setAttribute('aria-label', 'Toggle sidebar')
     button.setAttribute('title', 'Toggle sidebar')
 
@@ -89,20 +92,20 @@ export function useSidebarToggle() {
   }
 
   function removeToggleButton() {
-    const button = document.querySelector(TOGGLE_BUTTON_SELECTOR)
+    const button = document.querySelector(`.${TOGGLE_BUTTON_CLASS}`)
     if (button) {
       button.remove()
     }
   }
 
   onContentUpdated(() => {
-    const vpContent = document.querySelector('.VPContent')
+    const vpContent = document.querySelector(CONTENT_SELECTOR)
 
     if (vpContent) {
       loadState()
 
-      const hasToggleButton = document.querySelector('.vp-sidebar-toggle')
-      const hasSidebar = document.querySelector('.VPSidebar')
+      const hasToggleButton = document.querySelector(`.${TOGGLE_BUTTON_CLASS}`)
+      const hasSidebar = document.querySelector(SIDEBAR_SELECTOR)
 
       if (!hasToggleButton && hasSidebar) {
         addToggleButton()
@@ -113,8 +116,8 @@ export function useSidebarToggle() {
 
       const observer = new MutationObserver((mutations, obs) => {
         if (
-          (isSidebarHidden.value && document.querySelector('.VPContent.has-sidebar'))
-          || (!isSidebarHidden.value && !document.querySelector('.VPContent.has-sidebar'))
+          (isSidebarHidden.value && document.querySelector(`${CONTENT_SELECTOR}.has-sidebar`))
+          || (!isSidebarHidden.value && !document.querySelector(`${CONTENT_SELECTOR}.has-sidebar`))
         ) {
           updateDOM()
           obs.disconnect()
