@@ -35,57 +35,71 @@
 .vp-sidebar-toggle svg {
   width: 20px;
   height: 20px;
-  transition: transform 0.3s ease;
 }
-.has-sidebar-toggle.vp-sidebar-hidden .vp-sidebar-toggle {
+html.has-sidebar-toggle.vp-sidebar-hidden:has(aside.VPSidebar) .VPContent > .vp-sidebar-toggle {
   left: 16px;
 }
 .has-sidebar-toggle .VPNavBar .vp-sidebar-toggle {
   position: static;
   flex-shrink: 0;
-  margin-right: 12px;
+  margin: 0 12px;
 }
 
-/* Transition effects for sidebar visibility */
-.vp-sidebar-transitioning .vp-sidebar-toggle {
+/* Animate the fallback toggle's fixed position. */
+html.has-sidebar-toggle.vp-sidebar-transitioning:has(aside.VPSidebar) .VPContent > .vp-sidebar-toggle {
   transition: left 0.3s ease;
-}
-.vp-sidebar-transitioning.vp-sidebar-hidden .VPSidebar {
-  transition: transform 0.3s ease;
-}
-
-.vp-sidebar-transitioning .VPSidebar {
-  transition: transform 0.3s ease;
-}
-.vp-sidebar-transitioning .VPContent {
-  transition: padding 0.3s ease;
 }
 
 @media (min-width: 960px) {
+  /* Hide the desktop sidebar immediately, including its focusable links. */
   .has-sidebar-toggle.vp-sidebar-hidden .VPSidebar {
     display: none;
-    transform: translateX(-100%);
   }
 
-  html.has-sidebar-toggle.vp-sidebar-hidden .VPDoc .container {
+  html.has-sidebar-toggle:has(aside.VPSidebar) .VPDoc > .container {
     max-width: calc(var(--vp-layout-max-width) - 64px);
   }
 
-  html.has-sidebar-toggle.vp-sidebar-hidden .VPDoc .content,
-  html.has-sidebar-toggle.vp-sidebar-hidden .VPDoc .content-container {
+  html.has-sidebar-toggle.vp-sidebar-hidden:has(aside.VPSidebar) .VPDoc .content {
     max-width: none;
   }
 
+  html.has-sidebar-toggle:has(aside.VPSidebar) .VPDoc .content-container {
+    margin-right: 0;
+  }
+
+  html.has-sidebar-toggle.vp-sidebar-hidden:has(aside.VPSidebar) .VPDoc .content-container {
+    max-width: 100%;
+  }
+
+  /* Animate document resizing. */
+  html.has-sidebar-toggle.vp-sidebar-transitioning:has(aside.VPSidebar) .VPContent {
+    transition: padding 0.3s ease;
+  }
+  html.has-sidebar-toggle.vp-sidebar-transitioning:has(aside.VPSidebar) .VPDoc .content-container {
+    transition: max-width 0.3s ease;
+  }
+
   /* Leave space for the fallback toggle when the sidebar is hidden. */
-  .vp-sidebar-hidden .VPLocalNav {
+  html.has-sidebar-toggle.vp-sidebar-hidden:has(aside.VPSidebar) .VPLocalNav {
     padding-left: 20px;
   }
 
   /* VitePress controls these header classes when scrolling. */
-  .has-sidebar-toggle.vp-sidebar-hidden .VPNavBar.has-sidebar {
+  html.has-sidebar-toggle.vp-sidebar-hidden:has(aside.VPSidebar) .VPNavBar.has-sidebar {
     background-color: var(--vp-nav-bg-color);
   }
-  .has-sidebar-toggle.vp-sidebar-hidden .VPNavBar.has-sidebar .divider {
+  html.has-sidebar-toggle.vp-sidebar-hidden:has(aside.VPSidebar) .VPNavBar.has-sidebar .divider {
     background-color: var(--vp-c-divider);
+  }
+}
+
+@media (min-width: 1440px) {
+  html.has-sidebar-toggle:has(aside.VPSidebar) .VPContent {
+    padding-right: calc((100vw - var(--vp-layout-max-width)) / 2);
+  }
+
+  html.has-sidebar-toggle.vp-sidebar-hidden:has(aside.VPSidebar) .VPContent {
+    padding-left: calc((100vw - var(--vp-layout-max-width)) / 2);
   }
 }

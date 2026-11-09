@@ -5,9 +5,11 @@ import {
   blockStorageAccess,
   blockStorageWrites,
   openSidebar,
+  readDocumentLayout,
   readSidebarPreference,
   seedSidebarPreference,
   sidebarPage,
+  tracePagerToggle,
   updateContent,
   writeSidebarPreference,
 } from './helpers.js'
@@ -116,6 +118,42 @@ test('button exposes its expanded state across toggles, reloads and navigation',
   expect(await readSidebarPreference(page)).toBe('0')
 })
 
+test('saved hidden preference leaves a page without a sidebar unchanged on reload', async ({ page }) => {
+  await page.goto('/example/page-without-sidebar')
+  await expect(page.locator('html')).toHaveClass(/has-sidebar-toggle/)
+  const defaultLayout = await readDocumentLayout(page)
+
+  await writeSidebarPreference(page, '1')
+  await page.reload()
+  await expect(page.locator('html')).toHaveClass(/has-sidebar-toggle/)
+  await expect(page.locator('.VPSidebar')).toHaveCount(0)
+  await expect(page.locator('.vp-sidebar-toggle')).toHaveCount(0)
+  expect(await readSidebarPreference(page)).toBe('1')
+  expect(await readDocumentLayout(page)).toEqual(defaultLayout)
+})
+
+test('navigation to a page without a sidebar restores its layout and retains the preference', async ({ page }) => {
+  await page.goto('/example/page-without-sidebar')
+  await expect(page.locator('html')).toHaveClass(/has-sidebar-toggle/)
+  const defaultLayout = await readDocumentLayout(page)
+
+  await page.locator('.VPDocFooter').getByRole('link', { name: 'Previous page Page with Sidebar' }).click()
+  const button = page.locator('.vp-sidebar-toggle')
+  await button.click()
+  await expect(button).toHaveAttribute('aria-expanded', 'false')
+  await page.locator('.VPDocFooter').getByRole('link', { name: 'Next page Page without Sidebar' }).click()
+  await expect(page.locator('h1')).toContainText('Page without Sidebar')
+  await expect(page.locator('.VPSidebar')).toHaveCount(0)
+  await expect(button).toHaveCount(0)
+  expect(await readSidebarPreference(page)).toBe('1')
+  expect(await readDocumentLayout(page)).toEqual(defaultLayout)
+
+  await page.locator('.VPDocFooter').getByRole('link', { name: 'Previous page Page with Sidebar' }).click()
+  await expect(button).toHaveAttribute('aria-expanded', 'false')
+  await expect(page.locator('.VPSidebar')).toHaveCSS('display', 'none')
+  await expect(page.locator('.VPContent')).not.toHaveClass(/has-sidebar/)
+})
+
 test('keyboard focus has a visible outline and Space toggles the sidebar', async ({ page }) => {
   await openSidebar(page)
   const button = page.locator('.vp-sidebar-toggle')
@@ -137,6 +175,15 @@ test('header placement follows the title in visual and keyboard order', async ({
   await page.locator('.VPNavBarTitle .title').focus()
   await page.keyboard.press('Tab')
   await expect(button).toBeFocused()
+})
+
+test('header toggle leaves a gap beside the sidebar', async ({ page }) => {
+  await openSidebar(page)
+  const gap = await page.locator('.vp-sidebar-toggle').evaluate((button) => {
+    const sidebar = document.querySelector('.VPSidebar')
+    return button.getBoundingClientRect().left - sidebar.getBoundingClientRect().right
+  })
+  expect(gap).toBeCloseTo(12)
 })
 
 test('header sidebar classes remain under VitePress control', async ({ page }) => {
@@ -167,15 +214,43 @@ test('hidden desktop sidebar releases document width and keyboard navigation', a
   await page.locator('.vp-sidebar-toggle').click()
   await expect(page.locator('.VPSidebar')).toHaveCSS('display', 'none')
   await expect(page.locator('.VPDoc > .container > .content')).toHaveCSS('max-width', 'none')
-  await expect(content).toHaveCSS('max-width', 'none')
   await expect(page.locator('.VPDoc > .container')).toHaveCSS('max-width', '1376px')
-  expect(await content.evaluate(element => element.getBoundingClientRect().width)).toBeGreaterThan(visibleWidth)
+  await expect(page.locator('html')).not.toHaveClass(/vp-sidebar-transitioning/)
+  const widths = await content.evaluate((element) => {
+    const column = element.parentElement
+    const style = getComputedStyle(column)
+    return {
+      actual: element.getBoundingClientRect().width,
+      available: column.getBoundingClientRect().width - Number.parseFloat(style.paddingLeft) - Number.parseFloat(style.paddingRight),
+    }
+  })
+  expect(widths.actual).toBeCloseTo(widths.available)
+  expect(widths.actual).toBeGreaterThan(visibleWidth)
   await page.locator('.vp-sidebar-toggle').focus()
   await page.locator('.VPSidebar a').first().evaluate(element => element.focus())
   await expect(page.locator('.vp-sidebar-toggle')).toBeFocused()
   await page.locator('.vp-sidebar-toggle').click()
   await expect(page.locator('.VPSidebar')).toBeVisible()
   await expect(content).toHaveCSS('max-width', '688px')
+})
+
+test('pager resizes smoothly and keeps its right edge when toggling', async ({ page }) => {
+  await page.setViewportSize({ width: 1600, height: 900 })
+  await openSidebar(page)
+
+  const hiding = await tracePagerToggle(page)
+  expect(hiding.immediate).toEqual(hiding.before)
+  expect(hiding.after.width).toBeGreaterThan(hiding.before.width)
+  expect(hiding.rightDrift).toBeLessThan(1)
+  expect(hiding.hasIntermediateWidth).toBe(true)
+
+  const showing = await tracePagerToggle(page)
+  expect(showing.immediate).toEqual(showing.before)
+  expect(showing.after.width).toBeLessThan(showing.before.width)
+  expect(showing.rightDrift).toBeLessThan(1)
+  expect(showing.hasIntermediateWidth).toBe(true)
+  expect(showing.after.width).toBeCloseTo(hiding.before.width, 0)
+  expect(showing.after.right).toBeCloseTo(hiding.before.right, 0)
 })
 
 test('saved desktop preference leaves mobile navigation and layout usable', async ({ page }) => {

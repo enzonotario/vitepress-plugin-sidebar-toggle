@@ -25,6 +25,41 @@ export async function openSidebar(page, hidden = false) {
   await expect(page.locator('.vp-sidebar-toggle')).toBeVisible()
 }
 
+export async function tracePagerToggle(page) {
+  return page.evaluate(async () => {
+    const pager = document.querySelector('.VPDocFooter .next')
+    const measure = () => {
+      const { left, right, width } = pager.getBoundingClientRect()
+      return { left, right, width }
+    }
+    const before = measure()
+    document.querySelector('.vp-sidebar-toggle').click()
+    const immediate = measure()
+    const frames = [immediate]
+    await new Promise((resolve) => {
+      function sample() {
+        frames.push(measure())
+        if (document.documentElement.classList.contains('vp-sidebar-transitioning')) {
+          requestAnimationFrame(sample)
+        }
+        else {
+          resolve()
+        }
+      }
+      requestAnimationFrame(sample)
+    })
+    const after = frames.at(-1)
+    return {
+      before,
+      immediate,
+      after,
+      rightDrift: Math.max(...frames.map(frame => Math.abs(frame.right - before.right))),
+      hasIntermediateWidth: frames.some(frame => frame.width > Math.min(before.width, after.width) + 1
+        && frame.width < Math.max(before.width, after.width) - 1),
+    }
+  })
+}
+
 // Seed each new document before application code runs.
 export async function seedSidebarPreference(page, value) {
   await page.addInitScript(({ key, value }) => {
@@ -87,4 +122,32 @@ export async function blockSidebarWrites(page) {
       window.failSidebarWrites = false
     })
   }
+}
+
+export async function readDocumentLayout(page) {
+  return page.evaluate(() => {
+    function measure(selector) {
+      const element = document.querySelector(selector)
+      if (!element) {
+        return null
+      }
+      const style = getComputedStyle(element)
+      return {
+        width: element.getBoundingClientRect().width,
+        maxWidth: style.maxWidth,
+        paddingLeft: style.paddingLeft,
+        paddingRight: style.paddingRight,
+        marginLeft: style.marginLeft,
+        marginRight: style.marginRight,
+      }
+    }
+
+    return {
+      outerContent: measure('.VPContent'),
+      docContainer: measure('.VPDoc > .container'),
+      docColumn: measure('.VPDoc > .container > .content'),
+      readingColumn: measure('.VPDoc .content-container'),
+      localNav: measure('.VPLocalNav'),
+    }
+  })
 }
