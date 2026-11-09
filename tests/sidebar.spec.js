@@ -10,6 +10,7 @@ import {
   seedSidebarPreference,
   sidebarPage,
   tracePagerToggle,
+  trackContentObservers,
   updateContent,
   writeSidebarPreference,
 } from './helpers.js'
@@ -34,6 +35,47 @@ test('repeated hidden content updates keep sidebar spacing removed', async ({ pa
   await expect(page.locator('.vp-sidebar-toggle')).toHaveCount(1)
   await page.locator('.vp-sidebar-toggle').click()
   await expect(page.locator('.VPContent')).toHaveClass(/has-sidebar/)
+})
+
+test('content updates keep one observer and rearm it after layout correction', async ({ page }) => {
+  const observerStats = await trackContentObservers(page)
+  await openSidebar(page, true)
+  await updateContent(page)
+  await updateContent(page)
+  const beforeMutation = await observerStats()
+  expect(beforeMutation.activeTargets).toBe(1)
+
+  await page.locator('.VPContent').evaluate((content) => {
+    content.classList.add('has-sidebar')
+    content.append(document.createElement('span'))
+  })
+  await expect(page.locator('.VPContent')).not.toHaveClass(/has-sidebar/)
+  expect(await observerStats()).toEqual({ activeTargets: 0, callbacks: beforeMutation.callbacks + 1 })
+
+  await updateContent(page)
+  expect((await observerStats()).activeTargets).toBe(1)
+  await page.locator('.VPContent').evaluate(content => content.append(document.createElement('span')))
+  expect(await observerStats()).toEqual({ activeTargets: 1, callbacks: beforeMutation.callbacks + 2 })
+})
+
+test('content observer releases replaced and missing content elements', async ({ page }) => {
+  const observerStats = await trackContentObservers(page)
+  await openSidebar(page, true)
+  const previousContent = await page.locator('.VPContent').evaluateHandle((content) => {
+    content.replaceWith(content.cloneNode(false))
+    return content
+  })
+  await updateContent(page)
+  const afterReplacement = await observerStats()
+  expect(afterReplacement.activeTargets).toBe(1)
+
+  await previousContent.evaluate(content => content.append(document.createElement('span')))
+  expect(await observerStats()).toEqual(afterReplacement)
+  await previousContent.dispose()
+
+  await page.locator('.VPContent').evaluate(content => content.remove())
+  await updateContent(page)
+  expect((await observerStats()).activeTargets).toBe(0)
 })
 
 test('blocked storage reads still initialize a usable toggle', async ({ page }) => {

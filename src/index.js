@@ -117,7 +117,18 @@ export function useSidebarToggle() {
     }
   }
 
+  const contentObserver = new MutationObserver((mutations, observer) => {
+    if (
+      (isSidebarHidden.value && document.querySelector(`${CONTENT_SELECTOR}.has-sidebar`))
+      || (!isSidebarHidden.value && !document.querySelector(`${CONTENT_SELECTOR}.has-sidebar`))
+    ) {
+      updateDOM()
+      observer.disconnect()
+    }
+  })
+
   onContentUpdated(() => {
+    contentObserver.disconnect()
     const vpContent = document.querySelector(CONTENT_SELECTOR)
 
     if (vpContent) {
@@ -134,16 +145,7 @@ export function useSidebarToggle() {
         removeToggleButton()
       }
 
-      const observer = new MutationObserver((mutations, obs) => {
-        if (
-          (isSidebarHidden.value && document.querySelector(`${CONTENT_SELECTOR}.has-sidebar`))
-          || (!isSidebarHidden.value && !document.querySelector(`${CONTENT_SELECTOR}.has-sidebar`))
-        ) {
-          updateDOM()
-          obs.disconnect()
-        }
-      })
-      observer.observe(vpContent, {
+      contentObserver.observe(vpContent, {
         childList: true,
         subtree: true,
       })

@@ -124,6 +124,47 @@ export async function blockSidebarWrites(page) {
   }
 }
 
+export async function trackContentObservers(page) {
+  await page.addInitScript(() => {
+    const NativeMutationObserver = window.MutationObserver
+    const targetsByObserver = new Map()
+    let callbacks = 0
+
+    window.MutationObserver = class extends NativeMutationObserver {
+      constructor(callback) {
+        super((mutations, observer) => {
+          if (targetsByObserver.has(observer)) {
+            callbacks++
+          }
+          callback(mutations, observer)
+        })
+      }
+
+      observe(target, options) {
+        super.observe(target, options)
+        if (target instanceof Element && target.matches('.VPContent')) {
+          if (!targetsByObserver.has(this)) {
+            targetsByObserver.set(this, new Set())
+          }
+          targetsByObserver.get(this).add(target)
+        }
+      }
+
+      disconnect() {
+        super.disconnect()
+        targetsByObserver.delete(this)
+      }
+    }
+
+    window.contentObserverStats = () => ({
+      activeTargets: [...targetsByObserver.values()].reduce((count, targets) => count + targets.size, 0),
+      callbacks,
+    })
+  })
+
+  return () => page.evaluate(() => window.contentObserverStats())
+}
+
 export async function readDocumentLayout(page) {
   return page.evaluate(() => {
     function measure(selector) {
