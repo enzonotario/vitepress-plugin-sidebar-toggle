@@ -37,17 +37,18 @@ bun add vitepress-plugin-sidebar-toggle
 
 ## Basic Configuration
 
-2. Add the plugin to your VitePress theme configuration file:
+2. Add the plugin to your VitePress theme configuration file. Include the explicit stylesheet import; the published package requires it:
 
 :::: code-group
 
 ```js [.vitepress/theme/index.js]
 import DefaultTheme from 'vitepress/theme'
 import { useSidebarToggle } from 'vitepress-plugin-sidebar-toggle'
+import 'vitepress-plugin-sidebar-toggle/style.css'
 
 export default {
   extends: DefaultTheme,
-  enhanceApp(ctx) {
+  enhanceApp() {
     useSidebarToggle()
   },
 }
@@ -57,10 +58,11 @@ export default {
 import type { Theme } from 'vitepress'
 import DefaultTheme from 'vitepress/theme'
 import { useSidebarToggle } from 'vitepress-plugin-sidebar-toggle'
+import 'vitepress-plugin-sidebar-toggle/style.css'
 
 export default {
   extends: DefaultTheme,
-  enhanceApp(ctx) {
+  enhanceApp() {
     useSidebarToggle()
   },
 } satisfies Theme
@@ -72,7 +74,9 @@ export default {
 
 3. To ensure the plugin works correctly with server-side rendering (SSR), you need to configure Vite to not externalize the plugin during SSR. Add the following configuration to your `.vitepress/config.js` or `.vitepress/config.ts` file:
 
-```js [.vitepress/config.js]{2-8}
+```js [.vitepress/config.js]
+import { defineConfig } from 'vitepress'
+
 export default defineConfig({
     vite: {
         ssr: {
@@ -84,6 +88,8 @@ export default defineConfig({
     // other configurations...
 })
 ```
+
+If you see `The requested module 'vitepress' does not provide an export named 'onContentUpdated'`, `noExternal` should help.
 
 That's it! Your VitePress site now has a sidebar toggle button that allows users to hide or show the sidebar.
 

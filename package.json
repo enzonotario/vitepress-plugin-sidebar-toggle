@@ -18,19 +18,27 @@
   ],
   "exports": {
     ".": {
-      "import": "./dist/vitepress-plugin-sidebar-toggle.js",
-      "require": "./dist/vitepress-plugin-sidebar-toggle.cjs"
+      "import": {
+        "types": "./src/index.d.ts",
+        "default": "./dist/vitepress-plugin-sidebar-toggle.js"
+      },
+      "require": {
+        "types": "./src/index.d.cts",
+        "default": "./dist/vitepress-plugin-sidebar-toggle.cjs"
+      }
     },
     "./style.css": "./dist/vitepress-plugin-sidebar-toggle.css",
     "./styles/*": "./src/styles/*",
     "./package.json": "./package.json"
   },
+  "types": "./src/index.d.ts",
   "main": "dist/vitepress-plugin-sidebar-toggle.cjs",
   "module": "dist/vitepress-plugin-sidebar-toggle.js",
   "engines": {
     "node": ">=18.0.0"
   },
   "scripts": {
+    "test": "playwright test",
     "build": "vite build",
     "docs:build": "vitepress build docs",
     "dev": "vitepress dev docs",
@@ -45,9 +53,11 @@
   },
   "devDependencies": {
     "@antfu/eslint-config": "^4.17.0",
+    "@playwright/test": "^1.65.0",
     "@unocss/eslint-plugin": "^66.3.3",
     "eslint": "^9.31.0",
     "eslint-plugin-format": "^1.0.1",
+    "typescript": "5.8.3",
     "unocss": "^66.3.3",
     "vite": "^7.0.4",
     "vitepress": "^1.6.3"
